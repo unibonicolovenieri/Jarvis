@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JARVIS — Guida alla Costruzione</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600&display=swap');
+
+  :root {
+    --arc: #00d4ff;
+    --arc-dim: #0088aa;
+    --arc-glow: rgba(0,212,255,0.3);
+    --warn: #ff6b35;
+    --gold: #ffd700;
+    --bg: #020c14;
+    --bg2: #041824;
+    --bg3: #071e2e;
+    --text: #c8e8f0;
+    --text-dim: #5a8a99;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .scanline {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--arc), transparent);
+    animation: scan 6s linear infinite;
+    opacity: 0.4;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  @keyframes scan {
+    0%   { top: 0; }
+    100% { top: 100vh; }
+  }
+
+  /* HEADER */
+  header {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 60px 20px 40px;
+    border-bottom: 1px solid rgba(0,212,255,0.2);
+  }
+
+  .arc-reactor {
+    width: 80px; height: 80px;
+    margin: 0 auto 20px;
+    position: relative;
+  }
+  .arc-reactor::before, .arc-reactor::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+  }
+  .arc-reactor::before {
+    inset: 0;
+    border: 2px solid var(--arc);
+    box-shadow: 0 0 20px var(--arc), inset 0 0 20px rgba(0,212,255,0.2);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  .arc-reactor::after {
+    inset: 15px;
+    background: radial-gradient(circle, var(--arc), var(--arc-dim));
+    box-shadow: 0 0 30px var(--arc);
+    animation: pulse 2s ease-in-out infinite reverse;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(0.95); }
+  }
+
+  h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    font-weight: 900;
+    letter-spacing: 0.3em;
+    color: var(--arc);
+    text-shadow: 0 0 30px var(--arc-glow), 0 0 60px rgba(0,212,255,0.2);
+  }
+
+  .subtitle {
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    letter-spacing: 0.2em;
+    margin-top: 10px;
+  }
+
+  /* NAV TABS */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 12px 20px;
+    background: rgba(2,12,20,0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(0,212,255,0.15);
+  }
+
+  .tab {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    padding: 8px 14px;
+    border: 1px solid var(--arc-dim);
+    background: transparent;
+    color: var(--arc-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+    clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+  }
+  .tab:hover, .tab.active {
+    background: rgba(0,212,255,0.1);
+    border-color: var(--arc);
+    color: var(--arc);
+    box-shadow: 0 0 10px var(--arc-glow);
+  }
+
+  /* SECTIONS */
+  .section {
+    display: none;
+    position: relative;
+    z-index: 10;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 50px 20px;
+  }
+  .section.active { display: block; }
+
+  .section-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.4rem;
+    color: var(--arc);
+    margin-bottom: 30px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(0,212,255,0.3);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title .icon { font-size: 1.6rem; }
+
+  /* CARDS GRID */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+
+  .card {
+    background: var(--bg2);
+    border: 1px solid rgba(0,212,255,0.2);
+    padding: 24px;
+    position: relative;
+    transition: all 0.3s;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 12px;
+    width: 12px; height: 1px;
+    background: var(--arc);
+    transform-origin: right;
+    transform: rotate(45deg) translateY(-50%);
+  }
+  .card:hover {
+    border-color: var(--arc);
+    box-shadow: 0 0 20px var(--arc-glow);
+    transform: translateY(-2px);
+  }
+
+  .card-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--arc-dim);
+    letter-spacing: 0.15em;
+    margin-bottom: 8px;
+  }
+  .card h3 {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.9rem;
+    color: var(--arc);
+    margin-bottom: 10px;
+  }
+  .card p {
+    font-size: 0.85rem;
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  .price-badge {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 3px 10px;
+    background: rgba(255,215,0,0.1);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    clip-path: polygon(4px 0%, 100% 0%, calc(100% - 4px) 100%, 0% 100%);
+  }
+
+  .required-badge {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 3px 10px;
+    background: rgba(255,107,53,0.1);
+    border: 1px solid var(--warn);
+    color: var(--warn);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    clip-path: polygon(4px 0%, 100% 0%, calc(100% - 4px) 100%, 0% 100%);
+  }
+
+  /* STEPS */
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .step {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .step-num {
+    font-family: 'Orbitron', monospace;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--arc);
+    text-shadow: 0 0 20px var(--arc-glow);
+    text-align: center;
+    padding-top: 4px;
+  }
+
+  .step-content {
+    background: var(--bg3);
+    border-left: 3px solid var(--arc);
+    padding: 20px 24px;
+  }
+
+  .step-content h3 {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.9rem;
+    color: var(--arc);
+    margin-bottom: 10px;
+  }
+
+  .step-content p {
+    font-size: 0.88rem;
+    line-height: 1.8;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+
+  /* CODE BLOCKS */
+  .code-block {
+    background: #010a0f;
+    border: 1px solid rgba(0,212,255,0.2);
+    border-left: 3px solid var(--arc-dim);
+    padding: 16px 20px;
+    margin: 12px 0;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    color: #7dd3fc;
+    overflow-x: auto;
+    white-space: pre;
+    position: relative;
+  }
+
+  .code-block .comment { color: var(--text-dim); }
+  .code-block .cmd { color: var(--arc); }
+
+  /* ARCHITECTURE DIAGRAM */
+  .arch-diagram {
+    background: var(--bg2);
+    border: 1px solid rgba(0,212,255,0.2);
+    padding: 30px;
+    margin: 20px 0;
+    text-align: center;
+  }
+
+  .arch-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 10px 0;
+  }
+
+  .arch-node {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    padding: 10px 16px;
+    border: 1px solid var(--arc-dim);
+    color: var(--arc);
+    background: rgba(0,212,255,0.05);
+    clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+    white-space: nowrap;
+  }
+
+  .arch-node.highlight {
+    border-color: var(--arc);
+    background: rgba(0,212,255,0.15);
+    box-shadow: 0 0 10px var(--arc-glow);
+  }
+
+  .arch-arrow {
+    color: var(--arc-dim);
+    font-size: 1.2rem;
+  }
+
+  .arch-connector {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--arc-dim), transparent);
+    margin: 5px 0;
+  }
+
+  /* WARNING BOX */
+  .warn-box {
+    border: 1px solid var(--warn);
+    background: rgba(255,107,53,0.05);
+    padding: 16px 20px;
+    margin: 20px 0;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .warn-box .warn-icon { font-size: 1.4rem; flex-shrink: 0; }
+  .warn-box p { font-size: 0.85rem; color: var(--text); line-height: 1.7; }
+
+  /* INFO BOX */
+  .info-box {
+    border: 1px solid rgba(0,212,255,0.4);
+    background: rgba(0,212,255,0.05);
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 0.85rem;
+    line-height: 1.7;
+  }
+
+  /* CHECKLIST */
+  .checklist {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .checklist li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    padding: 10px 16px;
+    background: var(--bg3);
+    border-left: 2px solid var(--arc-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .checklist li:hover {
+    border-left-color: var(--arc);
+    background: rgba(0,212,255,0.05);
+  }
+
+  .checklist li.done {
+    border-left-color: #00ff88;
+    opacity: 0.6;
+    text-decoration: line-through;
+    text-decoration-color: rgba(0,255,136,0.4);
+  }
+
+  .check-icon {
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--arc-dim);
+    flex-shrink: 0;
+    width: 20px;
+  }
+
+  .checklist li.done .check-icon {
+    color: #00ff88;
+  }
+
+  /* TIMELINE */
+  .timeline {
+    position: relative;
+    padding-left: 30px;
+    border-left: 1px solid rgba(0,212,255,0.3);
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+    padding-left: 20px;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -35px;
+    top: 6px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--arc);
+    box-shadow: 0 0 10px var(--arc);
+  }
+
+  .timeline-item h4 {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    color: var(--arc);
+    margin-bottom: 6px;
+  }
+
+  .timeline-item .phase {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  .timeline-item p {
+    font-size: 0.85rem;
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  /* STATUS BAR */
+  footer {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(2,12,20,0.95);
+    border-top: 1px solid rgba(0,212,255,0.2);
+    padding: 8px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+  }
+
+  .status-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #00ff88;
+    margin-right: 6px;
+    box-shadow: 0 0 6px #00ff88;
+    animation: blink 1.5s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .progress-container { margin-bottom: 30px; }
+  .progress-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .progress-bar {
+    height: 4px;
+    background: var(--bg3);
+    border: 1px solid rgba(0,212,255,0.2);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--arc-dim), var(--arc));
+    box-shadow: 0 0 10px var(--arc-glow);
+    transition: width 1s ease;
+  }
+
+  @media (max-width: 600px) {
+    .step { grid-template-columns: 40px 1fr; gap: 12px; }
+    .step-num { font-size: 1.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="scanline"></div>
+
+<header>
+  <div class="arc-reactor"></div>
+  <h1>JARVIS</h1>
+  <div class="subtitle">// GUIDA ALLA COSTRUZIONE DEL TUO ASSISTENTE AI ROBOTICO //</div>
+</header>
+
+<nav>
+  <button class="tab active" onclick="showTab('overview')">OVERVIEW</button>
+  <button class="tab" onclick="showTab('hardware')">HARDWARE</button>
+  <button class="tab" onclick="showTab('software')">SOFTWARE</button>
+  <button class="tab" onclick="showTab('assembly')">ASSEMBLAGGIO</button>
+  <button class="tab" onclick="showTab('code')">CODICE</button>
+  <button class="tab" onclick="showTab('roadmap')">ROADMAP</button>
+  <button class="tab" onclick="showTab('checklist')">CHECKLIST</button>
+</nav>
+
+<!-- OVERVIEW -->
+<div class="section active" id="overview">
+  <div class="section-title"><span class="icon">⚡</span> ARCHITETTURA DEL SISTEMA</div>
+
+  <div class="arch-diagram">
+    <div class="arch-row">
+      <div class="arch-node">🎙️ MICROFONO USB</div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node highlight">🧠 RASPBERRY PI 3</div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">🔊 SPEAKER</div>
+    </div>
+    <div class="arch-connector"></div>
+    <div class="arch-row">
+      <div class="arch-node">☁️ STT / TTS API</div>
+      <div class="arch-arrow">⇄</div>
+      <div class="arch-node highlight">🤖 AI CORE (Claude / GPT)</div>
+      <div class="arch-arrow">⇄</div>
+      <div class="arch-node">📡 GPIO / I2C</div>
+    </div>
+    <div class="arch-connector"></div>
+    <div class="arch-row">
+      <div class="arch-node">⚙️ MOTORE SX</div>
+      <div class="arch-arrow">←</div>
+      <div class="arch-node">🔧 DRIVER L298N</div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">⚙️ MOTORE DX</div>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-tag">// MODULO 01</div>
+      <h3>🎙️ VOICE INPUT</h3>
+      <p>Il microfono cattura la tua voce. Un sistema di Wake Word (es. "Hey Jarvis") attiva l'ascolto. Il parlato viene convertito in testo tramite Whisper o Google STT.</p>
+    </div>
+    <div class="card">
+      <div class="card-tag">// MODULO 02</div>
+      <h3>🧠 AI BRAIN</h3>
+      <p>Il testo viene inviato all'API di Claude o GPT. La risposta generata viene convertita in audio (TTS) e riprodotta dallo speaker del robot.</p>
+    </div>
+    <div class="card">
+      <div class="card-tag">// MODULO 03</div>
+      <h3>🚗 MOVIMENTO</h3>
+      <p>Il Pi gestisce i motori DC tramite un driver L298N connesso ai pin GPIO. L'AI può comandare movimenti dicendo "avanza", "gira a destra" etc.</p>
+    </div>
+    <div class="card">
+      <div class="card-tag">// MODULO 04</div>
+      <h3>⚡ ALIMENTAZIONE</h3>
+      <p>Una batteria LiPo o un powerbank da 10.000 mAh alimenta il Pi. I motori hanno una batteria separata (6-12V) per evitare interferenze.</p>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <strong style="color:var(--arc); font-family:'Orbitron',monospace; font-size:0.8rem;">💡 APPROCCIO CONSIGLIATO:</strong><br><br>
+    Il Raspberry Pi 3 è sufficientemente potente per gestire la logica, ma la maggior parte dell'AI (LLM) verrà eseguita <strong>nel cloud</strong> tramite API (Claude, OpenAI). 
+    Per l'elaborazione locale puoi usare Whisper (tiny/base) per il riconoscimento vocale offline, mentre per il TTS pyttsx3 o Coqui-TTS funzionano senza internet.
+  </div>
+</div>
+
+<!-- HARDWARE -->
+<div class="section" id="hardware">
+  <div class="section-title"><span class="icon">🔧</span> LISTA COMPONENTI HARDWARE</div>
+
+  <div class="progress-container">
+    <div class="progress-label"><span>BUDGET STIMATO</span><span style="color:var(--gold)">€80 - €150</span></div>
+    <div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-tag">// CERVELLO</div>
+      <h3>Raspberry Pi 3 Model B+</h3>
+      <p>CPU quad-core 1.4GHz, 1GB RAM, WiFi/BT integrati. Già ottimo per questo progetto. Il Pi 4 (2-4GB RAM) è consigliato se vuoi eseguire Whisper locally senza lag.</p>
+      <span class="required-badge">INDISPENSABILE</span>
+      <span class="price-badge">~€35-50</span>
+    </div>
+    <div class="card">
+      <div class="card-tag">// VOCE INPUT</div>
+      <h3>Microfono USB Omnidirezionale</h3>
+      <p>Un semplice microfono USB funziona perfettamente. Alternativa: ReSpeaker 2-Mic HAT (progettato per Pi, con noise cancelling e LED ring).</p>
+      <span class="required-badge">INDISPENSABILE</span>
+      <span class="price-badge">€8-25</span>
+    </div>
+    <div class="card">
+      <div class="card-tag">// VOCE OUTPUT</div>
+      <h3>Speaker con amplificatore</h3>
+      <p>Mini speaker con jack 3.5mm oppure un altoparlante con PAM8403 integrato (amplificatore). Il Pi non ha abbastanza potenza per speaker passivi.</p>
+      <span class="required-badge">INDISPENSABILE</span>
+      <span class="price-badge">€5-15</span>
+    </div>
+    <div class="card">
+      <div class="card-tag">// MOTORI</div>
+      <h3>2x Motori DC con encoder</h3>
+      <p>Motori DC 3-6V con riduttore. Il kit TT Motor (giallo) è economico e compatibile. Oppure Pololu N20 per più precisione e torque.</p>
+      <span class="required-badge">INDISPENSABILE</span>
+      <span class="price-badge">€5-20</span>
+    </div>
+    <div class="card">
+      <div class="card-tag">// DRIVER MOTORI</div>
+      <h3>L298N Motor Driver</h3>
+      <p>Controlla 2 motori DC bidirezionalmente. Si collega ai GPIO del Pi. Supporta 5-35V lato motori, ha regolatore 5V integrato. Alternativa: TB6612FNG (più efficiente).</p>
+      <span class="required-badge">INDISPENSABILE</span>
+      <span class="price-badge">€3-8</span>
+    </div>
+    <div class="card">
+      <div class="card-tag">// TELAIO</div>
+      <h3>Chassis Robot 2WD</h3>
+      <p>Kit telaio in acrilico con 2 ruote, include già i motori TT e la ruota folle. Alternativa: stampa 3D il tuo telaio personalizzato!</p>
+      <span class="price-badge">€8-15</span>
+    </div>
+    <div class="card">
+      <div class="card-tag">// ALIMENTAZIONE PI</div>
+      <h3>Powerbank 10.000 mAh</h3>
+      <p>Alimenta il Raspberry via USB. Scegli uno che non si spenga con consumi bassi (problema comune). Raccomandato: Anker con "Trickle-Charging" disabilitato.</p>
+      <span class="price-badge">€15-25</span>
+    </div>
+    <div class="card">
+      <div class="card-tag">// ALIMENTAZIONE MOTORI</div>
+      <h3>Batteria 4xAA o LiPo 7.4V</h3>
+      <p>Separa sempre l'alimentazione motori da quella del Pi per evitare brownout (cali di tensione). Un portabatterie 4xAA (6V) va benissimo per iniziare.</p>
+      <span class="price-badge">€3-15</span>
+    </div>
+  </div>
+
+  <div class="warn-box">
+    <div class="warn-icon">⚠️</div>
+    <p><strong>IMPORTANTE:</strong> Non alimentare mai i motori direttamente dai pin GPIO del Raspberry Pi — bruceresti il Pi! Usa sempre un driver motori (L298N o simile) come intermediario.</p>
+  </div>
+</div>
+
+<!-- SOFTWARE -->
+<div class="section" id="software">
+  <div class="section-title"><span class="icon">💻</span> STACK SOFTWARE</div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-tag">// OS</div>
+      <h3>Raspberry Pi OS (64-bit)</h3>
+      <p>Usa la versione Lite (headless) per risparmiare RAM. Configura SSH e WiFi via raspi-config. Python 3.11+ è preinstallato.</p>
+    </div>
+    <div class="card">
+      <div class="card-tag">// STT — SPEECH TO TEXT</div>
+      <h3>OpenAI Whisper (tiny)</h3>
+      <p>Modello tiny: 39M parametri, gira su Pi 3 in 3-8 secondi. Alternativa online: Google Speech-to-Text API (più veloce, richiede internet).</p>
+    </div>
+    <div class="card">
+      <div class="card-tag">// AI BRAIN</div>
+      <h3>Claude API (Anthropic)</h3>
+      <p>Usa claude-haiku-4-5 per risposte rapide e a basso costo. Ottimo per comandi in tempo reale. GPT-4o-mini è un'alternativa valida.</p>
+    </div>
+    <div class="card">
+      <div class="card-tag">// TTS — TEXT TO SPEECH</div>
+      <h3>pyttsx3 / Coqui TTS</h3>
+      <p>pyttsx3 funziona offline, è leggero ma robotico. Coqui TTS produce voce più naturale. ElevenLabs API per qualità cinema.</p>
+    </div>
+    <div class="card">
+      <div class="card-tag">// WAKE WORD</div>
+      <h3>Porcupine (Picovoice)</h3>
+      <p>Rilevamento wake word offline, ultra-leggero (gira su MCU). Free tier disponibile. Alternativa: Snowboy (deprecato ma funziona) o keyword detection manuale.</p>
+    </div>
+    <div class="card">
+      <div class="card-tag">// MOTORI</div>
+      <h3>RPi.GPIO / gpiozero</h3>
+      <p>Librerie Python per controllare i pin GPIO. gpiozero ha una classe Robot già pronta. pigpio offre PWM hardware più preciso per velocità variabile.</p>
+    </div>
+    <div class="card">
+      <div class="card-tag">// AUDIO</div>
+      <h3>PyAudio + ALSA</h3>
+      <p>PyAudio per catturare audio dal microfono. Configura ALSA per selezionare il device corretto. sounddevice è un'alternativa più moderna.</p>
+    </div>
+    <div class="card">
+      <div class="card-tag">// ORCHESTRAZIONE</div>
+      <h3>Python asyncio</h3>
+      <p>Gestisci microfono, AI e motori in modo asincrono. Il robot deve ascoltare mentre si muove. Un event loop centrale coordina tutto.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ASSEMBLAGGIO -->
+<div class="section" id="assembly">
+  <div class="section-title"><span class="icon">🔩</span> SCHEMA DI ASSEMBLAGGIO</div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-content">
+        <h3>COLLEGA I MOTORI AL DRIVER L298N</h3>
+        <p>Motore sinistro → OUT1 e OUT2. Motore destro → OUT3 e OUT4. La batteria motori (6V) va su +12V e GND del L298N. Il jumper da 5V deve essere presente se la batteria è ≤ 12V.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-content">
+        <h3>COLLEGA L298N AI GPIO DEL RASPBERRY</h3>
+        <p>IN1 → GPIO 17 (pin 11) | IN2 → GPIO 27 (pin 13) | IN3 → GPIO 22 (pin 15) | IN4 → GPIO 23 (pin 16) | ENA → GPIO 18 (PWM) | ENB → GPIO 25 (PWM). GND comune tra Pi e L298N!</p>
+        <div class="code-block">GPIO Pi 3 Pinout:
+PIN 11 = GPIO17 → L298N IN1
+PIN 13 = GPIO27 → L298N IN2
+PIN 15 = GPIO22 → L298N IN3
+PIN 16 = GPIO23 → L298N IN4
+PIN 12 = GPIO18 → L298N ENA (PWM)
+PIN 22 = GPIO25 → L298N ENB</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-content">
+        <h3>COLLEGA MICROFONO E SPEAKER</h3>
+        <p>Il microfono USB si collega direttamente a una porta USB del Pi. Lo speaker con jack 3.5mm va nell'audio jack del Pi. Testa subito con <code>arecord -l</code> e <code>aplay -l</code>.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-content">
+        <h3>ALIMENTAZIONE</h3>
+        <p>Powerbank USB → Micro-USB del Pi. Batteria motori separata → L298N. Mai collegare la batteria motori al Pi direttamente. Aggiungi un interruttore fisico per sicurezza.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">05</div>
+      <div class="step-content">
+        <h3>ASSEMBLA IL TELAIO</h3>
+        <p>Monta i motori al telaio, aggiungi le ruote. Posiziona il Pi sopra con distanziali M3. Il L298N va sotto o lateralmente. Lascia i cavi in ordine — userai breadboard e jumper wire per i prototipi.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="warn-box">
+    <div class="warn-icon">🔌</div>
+    <p><strong>GND COMUNE:</strong> È fondamentale che il GND del Raspberry Pi e il GND del driver L298N siano collegati insieme. Senza questo collegamento, i segnali GPIO non funzioneranno correttamente.</p>
+  </div>
+</div>
+
+<!-- CODICE -->
+<div class="section" id="code">
+  <div class="section-title"><span class="icon">⌨️</span> CODICE BASE — JARVIS CORE</div>
+
+  <div class="info-box">
+    Installa le dipendenze con: <strong style="color:var(--arc); font-family:'Share Tech Mono',monospace">pip install RPi.GPIO openai anthropic pyttsx3 pyaudio pvporcupine</strong>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">🚗</div>
+      <div class="step-content">
+        <h3>robot_motion.py — Controllo Motori</h3>
+<div class="code-block"><span class="comment"># robot_motion.py</span>
+import RPi.GPIO as GPIO
+import time
+
+<span class="comment"># Pin GPIO</span>
+IN1, IN2, IN3, IN4 = 17, 27, 22, 23
+ENA, ENB = 18, 25
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup([IN1,IN2,IN3,IN4,ENA,ENB], GPIO.OUT)
+pwmA = GPIO.PWM(ENA, 100)
+pwmB = GPIO.PWM(ENB, 100)
+pwmA.start(75)  <span class="comment"># velocità 75%</span>
+pwmB.start(75)
+
+def forward():
+    GPIO.output([IN1,IN3], GPIO.HIGH)
+    GPIO.output([IN2,IN4], GPIO.LOW)
+
+def backward():
+    GPIO.output([IN2,IN4], GPIO.HIGH)
+    GPIO.output([IN1,IN3], GPIO.LOW)
+
+def turn_left():
+    GPIO.output(IN1, GPIO.LOW)
+    GPIO.output(IN2, GPIO.HIGH)
+    GPIO.output(IN3, GPIO.HIGH)
+    GPIO.output(IN4, GPIO.LOW)
+
+def turn_right():
+    GPIO.output(IN1, GPIO.HIGH)
+    GPIO.output(IN2, GPIO.LOW)
+    GPIO.output(IN3, GPIO.LOW)
+    GPIO.output(IN4, GPIO.HIGH)
+
+def stop():
+    GPIO.output([IN1,IN2,IN3,IN4], GPIO.LOW)</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">🧠</div>
+      <div class="step-content">
+        <h3>jarvis_brain.py — AI Core</h3>
+<div class="code-block"><span class="comment"># jarvis_brain.py</span>
+import anthropic
+import pyttsx3
+import speech_recognition as sr
+
+client = anthropic.Anthropic(api_key="LA_TUA_CHIAVE")
+tts = pyttsx3.init()
+tts.setProperty('rate', 160)
+
+SYSTEM_PROMPT = """Sei JARVIS, l'assistente AI di un robot.
+Rispondi in italiano, in modo conciso.
+Quando vuoi che il robot si muova, aggiungi tag come:
+[AVANZA], [INDIETRO], [GIRA_SX], [GIRA_DX], [STOP]"""
+
+def ask_jarvis(user_input: str) -> str:
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=300,
+        system=SYSTEM_PROMPT,
+        messages=[{"role":"user","content":user_input}]
+    )
+    return response.content[0].text
+
+def speak(text: str):
+    <span class="comment"># Rimuovi i tag movimento prima di parlare</span>
+    clean = text.replace("[AVANZA]","").replace("[STOP]","")
+    tts.say(clean)
+    tts.runAndWait()
+
+def listen() -> str:
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("In ascolto...")
+        audio = r.listen(source, timeout=5)
+    return r.recognize_google(audio, language="it-IT")</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">🤖</div>
+      <div class="step-content">
+        <h3>main.py — Loop Principale</h3>
+<div class="code-block"><span class="comment"># main.py — Il cuore di JARVIS</span>
+import re, time
+from robot_motion import forward, stop, turn_left, turn_right
+from jarvis_brain import ask_jarvis, speak, listen
+
+COMMANDS = {
+    "AVANZA":   (forward,    1.5),
+    "INDIETRO": (backward,   1.5),
+    "GIRA_SX":  (turn_left,  0.8),
+    "GIRA_DX":  (turn_right, 0.8),
+    "STOP":     (stop,       0),
+}
+
+def execute_commands(response: str):
+    tags = re.findall(r'\[(\w+)\]', response)
+    for tag in tags:
+        if tag in COMMANDS:
+            action, duration = COMMANDS[tag]
+            action()
+            if duration > 0:
+                time.sleep(duration)
+                stop()
+
+def main():
+    speak("Sistema JARVIS attivato. Come posso aiutarti?")
+    while True:
+        try:
+            user_input = listen()
+            print(f"Tu: {user_input}")
+            response = ask_jarvis(user_input)
+            print(f"JARVIS: {response}")
+            execute_commands(response)
+            speak(response)
+        except Exception as e:
+            print(f"Errore: {e}")
+
+if __name__ == "__main__":
+    main()</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ROADMAP -->
+<div class="section" id="roadmap">
+  <div class="section-title"><span class="icon">🗺️</span> ROADMAP DI SVILUPPO</div>
+
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="phase">FASE 1 — SETTIMANA 1-2</div>
+      <h4>🔧 BASE HARDWARE</h4>
+      <p>Monta il telaio, collega motori e L298N. Testa il movimento con script Python semplici. Verifica che tutti i GPIO funzionino correttamente. Budget: ~€60</p>
+    </div>
+    <div class="timeline-item">
+      <div class="phase">FASE 2 — SETTIMANA 2-3</div>
+      <h4>🎙️ VOCE BASE</h4>
+      <p>Configura microfono e speaker. Implementa riconoscimento vocale con Google STT (online) e TTS con pyttsx3. Test: il robot ti risponde a voce.</p>
+    </div>
+    <div class="timeline-item">
+      <div class="phase">FASE 3 — SETTIMANA 3-4</div>
+      <h4>🧠 INTEGRAZIONE AI</h4>
+      <p>Connetti le API Claude/OpenAI. Progetta il system prompt per JARVIS. Il robot conversa e risponde in modo intelligente. Aggiungi gestione contesto (memoria conversazione).</p>
+    </div>
+    <div class="timeline-item">
+      <div class="phase">FASE 4 — SETTIMANA 4-5</div>
+      <h4>🚗 COMANDI DI MOVIMENTO</h4>
+      <p>L'AI capisce comandi vocali come "vai avanti", "gira a destra". Integra il parsing dei tag [AVANZA] [GIRA_DX] nella risposta dell'AI. Test su percorso reale.</p>
+    </div>
+    <div class="timeline-item">
+      <div class="phase">FASE 5 — MESE 2+</div>
+      <h4>🌟 FUNZIONALITÀ AVANZATE</h4>
+      <p>Wake word "Hey Jarvis", sensori a ultrasuoni per evitare ostacoli, camera con visione artificiale, memoria persistente con SQLite, voce più naturale con ElevenLabs, modalità autonoma.</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-tag">// UPGRADE FUTURO</div>
+      <h3>📷 Visione Artificiale</h3>
+      <p>Raspberry Pi Camera Module + OpenCV o GPT-4 Vision. Il robot vede e descrive l'ambiente. Costo: €15-25</p>
+    </div>
+    <div class="card">
+      <div class="card-tag">// UPGRADE FUTURO</div>
+      <h3>📡 Sensori</h3>
+      <p>HC-SR04 (ultrasuoni) per evitare ostacoli. MPU6050 (giroscopio) per orientamento. IR per seguire linee. Costo: €5-20</p>
+    </div>
+    <div class="card">
+      <div class="card-tag">// UPGRADE FUTURO</div>
+      <h3>🖥️ Display</h3>
+      <p>OLED 128x64 per mostrare lo "stato mentale" di JARVIS. Display TFT a colori per espressioni facciali. Costo: €5-15</p>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKLIST -->
+<div class="section" id="checklist">
+  <div class="section-title"><span class="icon">✅</span> CHECKLIST INTERATTIVA</div>
+
+  <div class="info-box" style="margin-bottom:20px; font-size:0.8rem;">
+    Clicca su ogni elemento per marcarlo come completato. I progressi vengono salvati localmente.
+  </div>
+
+  <div class="progress-container">
+    <div class="progress-label"><span>PROGRESSO TOTALE</span><span id="progress-pct" style="color:var(--arc)">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-bar" style="width:0%"></div></div>
+  </div>
+
+  <ul class="checklist" id="checklist">
+    <li onclick="toggle(this)"><span class="check-icon">[ ]</span>Acquistare Raspberry Pi 3 Model B+</li>
+    <li onclick="toggle(this)"><span class="check-icon">[ ]</span>Acquistare MicroSD 32GB (Class 10) e flashare Raspberry Pi OS</li>
+    <li onclick="toggle(this)"><span class="check-icon">[ ]</span>Acquistare driver motori L298N</li>
+    <li onclick="toggle(this)"><span class="check-icon">[ ]</span>Acquistare 2x motori DC + telaio 2WD</li>
+    <li onclick="toggle(this)"><span class="check-icon">[ ]</span>Acquistare microfono USB</li>
+    <li onclick="toggle(this)"><span class="check-icon">[ ]</span>Acquistare speaker con amplificatore</li>
+    <li onclick="toggle(this)"><span class="check-icon">[ ]</span>Acquistare powerbank + batteria motori separata</li>
+    <li onclick="toggle(this)"><span class="check-icon">[ ]</span>Jumper wire, breadboard, resistenze, distanziali M3</li>
+    <li onclick="toggle(this)"><span class="check-icon">[ ]</span>Configurare SSH e WiFi su Raspberry Pi OS</li>
+    <li onclick="toggle(this)"><span class="check-icon">[ ]</span>Installare Python 3.11 e pip</li>
+    <li onclick="toggle(this)"><span class="check-icon">[ ]</span>Installare librerie: RPi.GPIO, pyaudio, speechrecognition, pyttsx3, anthropic</li>
+    <li onclick="toggle(this)"><span class="check-icon">[ ]</span>Test GPIO: fare lampeggiare un LED</li>
+    <li onclick="toggle(this)"><span class="check-icon">[ ]</span>Test motori: far girare entrambi i motori</li>
+    <li onclick="toggle(this)"><span class="check-icon">[ ]</span>Test audio: registrare e riprodurre audio</li>
+    <li onclick="toggle(this)"><span class="check-icon">[ ]</span>Ottenere API key Anthropic (claude.ai/settings)</li>
+    <li onclick="toggle(this)"><span class="check-icon">[ ]</span>Test AI: risposta vocale semplice funzionante</li>
+    <li onclick="toggle(this)"><span class="check-icon">[ ]</span>Integrare comandi movimento nell'AI</li>
+    <li onclick="toggle(this)"><span class="check-icon">[ ]</span>Test completo: robot che risponde e si muove a voce</li>
+    <li onclick="toggle(this)"><span class="check-icon">[ ]</span>Assemblare tutto sul telaio in modo permanente</li>
+    <li onclick="toggle(this)"><span class="check-icon">[ ]</span>JARVIS ONLINE 🚀</li>
+  </ul>
+</div>
+
+<footer>
+  <div><span class="status-dot"></span>SISTEMA OPERATIVO</div>
+  <div>JARVIS BUILD v1.0 — RASPBERRY PI 3</div>
+  <div>MONTECATINI-TERME, IT</div>
+</footer>
+
+<script>
+  function showTab(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    event.target.classList.add('active');
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+
+  function toggle(el) {
+    el.classList.toggle('done');
+    el.querySelector('.check-icon').textContent = el.classList.contains('done') ? '[✓]' : '[ ]';
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const items = document.querySelectorAll('#checklist li');
+    const done = document.querySelectorAll('#checklist li.done').length;
+    const pct = Math.round((done / items.length) * 100);
+    document.getElementById('progress-pct').textContent = pct + '%';
+    document.getElementById('progress-bar').style.width = pct + '%';
+  }
+</script>
+</body>
+</html>
