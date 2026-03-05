@@ -1,0 +1,8 @@
+# Core AI library
+openai>=1.0.0
+
+# Beautiful terminal output (panels, colours, styled prompts)
+rich>=13.0.0
+
+# Load environment variables from a .env file
+python-dotenv>=1.0.0
