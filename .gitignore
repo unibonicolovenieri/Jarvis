@@ -1,0 +1,22 @@
+# Environment variables — never commit real secrets
+.env
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Virtual environment directories
+.venv/
+venv/
+env/
+
+# Distribution / packaging artefacts
+dist/
+build/
+*.egg-info/
+
+# IDE project files
+.vscode/
+.idea/
+*.swp
+*.swo
